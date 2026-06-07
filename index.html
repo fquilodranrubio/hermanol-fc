@@ -400,7 +400,7 @@ function showSection(id, btn) {
 // Login
 async function doLogin() {
   const name = document.getElementById('login-name').value;
-  const pin = document.getElementById('login-pin').value;
+  const pin = document.getElementById('login-pin').value.trim();
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
 
@@ -408,9 +408,11 @@ async function doLogin() {
 
   showLoading('Verificando...');
   try {
-    const rows = await sb('GET', 'participantes?nombre=eq.' + encodeURIComponent(name) + '&pin=eq.' + encodeURIComponent(pin) + '&select=*');
-    if (!rows.length) { hideLoading(); errEl.textContent='PIN incorrecto'; errEl.style.display='block'; return; }
-    currentUser = rows[0];
+    // Fetch all participants and filter client-side to avoid encoding issues
+    const rows = await sb('GET', 'participantes?select=*');
+    const match = rows.find(r => r.nombre === name && String(r.pin) === String(pin));
+    if (!match) { hideLoading(); errEl.textContent='PIN incorrecto'; errEl.style.display='block'; return; }
+    currentUser = match;
     await initApp();
   } catch(e) {
     hideLoading();
